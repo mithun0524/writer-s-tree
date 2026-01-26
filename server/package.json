@@ -5,8 +5,9 @@
   "main": "src/index.js",
   "type": "module",
   "scripts": {
-    "start": "npm run db:migrate && node src/index.js",
+    "start": "node src/index.js",
     "dev": "node src/index.js",
+    "migrate": "npm run db:migrate",
     "db:migrate": "node src/scripts/migrate.js",
     "db:seed": "node src/scripts/seed.js"
   },
