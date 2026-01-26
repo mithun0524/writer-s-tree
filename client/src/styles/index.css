@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background-primary: #FEFDFB;
+  --color-background-secondary: #F8F6F3;
+  --color-text-primary: #2C2C2C;
+  --color-text-secondary: #6B6B6B;
+  --color-text-tertiary: #A8A8A8;
+  --color-tree-trunk: #5C4A3A;
+  --color-tree-bark: #3D2F24;
+  --color-tree-leaves-young: #7CB342;
+  --color-tree-leaves-mature: #558B2F;
+  --color-tree-leaves-highlight: #9CCC65;
+  --color-accent-bloom: #FFA5C0;
+  --color-accent-bloomDeep: #FF6B9D;
+  --color-accent-focus: #4A90E2;
+  --color-accent-success: #7CB342;
+  --color-accent-warning: #FFB74D;
+  --color-border-light: #E0DDD8;
+  --color-border-subtle: #F0EDE8;
+  
+  --shadow-level1: 0 1px 3px rgba(0,0,0,0.04);
+  --shadow-level2: 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-level3: 0 4px 16px rgba(0,0,0,0.08);
+  --shadow-level4: 0 8px 32px rgba(0,0,0,0.10);
+}
+
+@layer base {
+  body {
+    background-color: #FEFDFB;
+    color: #2C2C2C;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  body::selection {
+    background-color: rgba(74, 144, 226, 0.15);
+  }
+}
+
+:root {
+  font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
+}
