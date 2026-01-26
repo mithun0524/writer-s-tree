@@ -17,4 +17,14 @@ export const query = (text, params) => pool.query(text, params);
 
 export const getClient = () => pool.connect();
 
+// Test database connection
+export const testDatabaseConnection = async () => {
+  try {
+    const res = await pool.query('SELECT NOW()');
+    console.log('Database connection test successful:', res.rows[0]);
+  } catch (err) {
+    console.error('Database connection test failed:', err);
+  }
+};
+
 export default pool;

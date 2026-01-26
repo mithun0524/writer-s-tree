@@ -48,10 +48,23 @@ interface LexicalEditorProps {
 }
 
 import { useState } from 'react';
+import React from 'react';
+import { useWordSuggestions } from '@/hooks/useWordSuggestions';
 
 export function LexicalEditor(props: LexicalEditorProps) {
   const { onEditorReady, onSuggestionsChange, onSuggestionInsert } = props;
   const [openPanel, setOpenPanel] = useState<null | 'outline' | 'history' | 'sprint' | 'focus'>(null);
+  const [cursorPosition, setCursorPosition] = useState(0);
+  const [editorContent, setEditorContent] = useState('');
+  
+  const { suggestions } = useWordSuggestions(editorContent, cursorPosition);
+
+  // Update parent with suggestions
+  React.useEffect(() => {
+    if (onSuggestionsChange) {
+      onSuggestionsChange(suggestions);
+    }
+  }, [suggestions, onSuggestionsChange]);
 
   const anyPanelOpen = openPanel !== null;
 
@@ -87,11 +100,15 @@ export function LexicalEditor(props: LexicalEditorProps) {
         <AutoFocusPlugin />
         <ListPlugin />
         <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
-        <WordCountPlugin />
         <EditorStatePlugin onEditorStateChange={onEditorReady} />
+        <WordCountPlugin onContentChange={(content: string, position: number) => {
+          setEditorContent(content);
+          setCursorPosition(position);
+        }} />
         <SuggestionsPlugin 
           onSuggestionsChange={onSuggestionsChange}
           onSuggestionInsert={onSuggestionInsert}
+          suggestions={suggestions}
         />
 
         {/* Advanced features with panel state */}

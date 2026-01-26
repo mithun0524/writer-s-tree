@@ -1,27 +1,11 @@
 import { useState, useEffect } from 'react';
-
-// Common word completions for basic functionality
-const COMMON_WORDS: Record<string, string[]> = {
-  'the': ['therefore', 'themselves', 'therapy'],
-  'cha': ['character', 'chapter', 'challenge'],
-  'wri': ['writing', 'written', 'writer'],
-  'sto': ['story', 'stopped', 'storage'],
-  'boo': ['book', 'books', 'bookmark'],
-  'con': ['continued', 'connection', 'considerable'],
-  'car': ['carefully', 'carried', 'ការ'],
-  'des': ['described', 'description', 'despite'],
-  'exp': ['experience', 'explained', 'expression'],
-  'mom': ['moment', 'moments', 'momentum'],
-  'sud': ['suddenly', 'sudden', 'suddently'],
-  'tho': ['thought', 'though', 'thorough'],
-  'bec': ['because', 'became', 'become'],
-  'som': ['something', 'someone', 'sometimes'],
-  'whe': ['where', 'when', 'whether'],
-  'wor': ['world', 'words', 'worked'],
-};
+import { useUser } from '@clerk/clerk-react';
+import { API_BASE_URL } from '@/config';
 
 export const useWordSuggestions = (content: string, cursorPosition: number) => {
+  const { user } = useUser();
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     // Get the current word being typed
@@ -29,23 +13,47 @@ export const useWordSuggestions = (content: string, cursorPosition: number) => {
     const lastSpaceIndex = textBeforeCursor.lastIndexOf(' ');
     const lastNewlineIndex = textBeforeCursor.lastIndexOf('\n');
     const startIndex = Math.max(lastSpaceIndex, lastNewlineIndex) + 1;
-    const currentWord = textBeforeCursor.substring(startIndex).toLowerCase();
+    const currentWord = textBeforeCursor.substring(startIndex);
 
     // Only show suggestions if word is at least 3 characters
     if (currentWord.length >= 3) {
-      const prefix = currentWord.substring(0, 3);
-      const matches = COMMON_WORDS[prefix] || [];
-      
-      // Filter to words that start with the current word
-      const filtered = matches
-        .filter(word => word.toLowerCase().startsWith(currentWord))
-        .slice(0, 3);
-      
-      setSuggestions(filtered);
+      fetchSuggestions(currentWord);
     } else {
       setSuggestions([]);
     }
   }, [content, cursorPosition]);
 
-  return suggestions;
+  const fetchSuggestions = async (context: string) => {
+    if (!user?.id) return;
+
+    try {
+      setLoading(true);
+      const response = await fetch(`${API_BASE_URL}/suggestions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-clerk-user-id': user.id
+        },
+        body: JSON.stringify({
+          context: context,
+          limit: 3
+        })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setSuggestions(data.data.suggestions || []);
+      } else {
+        console.error('Failed to fetch suggestions:', data.message);
+        setSuggestions([]);
+      }
+    } catch (error) {
+      console.error('Error fetching suggestions:', error);
+      setSuggestions([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { suggestions, loading };
 };

@@ -1,9 +1,13 @@
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { useEffect } from 'react';
-import { $getRoot } from 'lexical';
+import { $getRoot, $getSelection, $isRangeSelection } from 'lexical';
 import { useProjectContext } from '@/context/ProjectContext';
 
-export function WordCountPlugin() {
+interface WordCountPluginProps {
+  onContentChange?: (content: string, cursorPosition: number) => void;
+}
+
+export function WordCountPlugin({ onContentChange }: WordCountPluginProps = {}) {
   const [editor] = useLexicalComposerContext();
   const { updateContent } = useProjectContext();
 
@@ -13,11 +17,23 @@ export function WordCountPlugin() {
         const root = $getRoot();
         const text = root.getTextContent();
         
+        // Get cursor position
+        const selection = $getSelection();
+        let cursorPosition = 0;
+        if (selection && $isRangeSelection(selection)) {
+          cursorPosition = selection.anchor.offset;
+        }
+        
         // Update content in ProjectContext
         updateContent(text);
+        
+        // Call the callback if provided
+        if (onContentChange) {
+          onContentChange(text, cursorPosition);
+        }
       });
     });
-  }, [editor, updateContent]);
+  }, [editor, updateContent, onContentChange]);
 
   return null;
 }

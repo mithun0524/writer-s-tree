@@ -57,11 +57,12 @@ app.get('/health', async (req, res) => {
     const dbCheck = await pool.query('SELECT 1');
     
     // Check Redis connection
-    const { getRedisClient } = await import('./services/redisService.js');
+    const { isRedisAvailable } = await import('./services/redisService.js');
     let redisStatus = 'healthy';
     try {
-      const redisClient = getRedisClient();
-      await redisClient.ping();
+      if (!isRedisAvailable()) {
+        redisStatus = 'unavailable';
+      }
     } catch (redisError) {
       redisStatus = 'unhealthy';
     }
@@ -109,9 +110,13 @@ app.use(errorHandler);
 // Initialize database and start server
 const startServer = async () => {
   try {
-    // Initialize Redis
-    await initRedis();
-    logger.info('Redis initialized');
+    // Initialize Redis (optional)
+    try {
+      await initRedis();
+      logger.info('Redis initialized');
+    } catch (redisError) {
+      logger.warn('Redis initialization failed, continuing without caching:', redisError.message);
+    }
 
     // Create database tables
     await createTables();

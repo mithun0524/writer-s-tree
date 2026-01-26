@@ -4,16 +4,18 @@ import { UserButton } from "@clerk/clerk-react";
 import { useNavigate } from 'react-router-dom';
 import { useProjectContext } from '@/context/ProjectContext';
 import { ExportMenu } from './ExportMenu';
-import { exportToDocx, exportToPdf, exportTreeAsPng } from '@/utils/exportUtils';
-import { exportLexicalToDocx, exportLexicalToPdf, exportLexicalToMarkdown, downloadMarkdown } from '@/utils/lexicalExportUtils';
+import { exportTreeAsPng } from '@/utils/exportUtils';
+import { API_BASE_URL } from '@/config';
+import { useUser } from '@clerk/clerk-react';
 
 interface HeaderProps {
   getEditorState?: (() => any) | null;
 }
 
-export const Header: React.FC<HeaderProps> = ({ getEditorState }) => {
-  const { project, updateSettings, wordCount, content, settingsConfigured, setSettingsConfigured } = useProjectContext();
+export const Header: React.FC<HeaderProps> = () => {
+  const { project, updateSettings, wordCount, settingsConfigured, setSettingsConfigured } = useProjectContext();
   const navigate = useNavigate();
+  const { user } = useUser();
   const [isSettingsOpen, setIsSettingsOpen] = useState(!settingsConfigured);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -43,44 +45,42 @@ export const Header: React.FC<HeaderProps> = ({ getEditorState }) => {
   };
 
   const handleExport = async (format: 'txt' | 'docx' | 'pdf' | 'markdown' | 'tree-png') => {
-    if (isExporting) return; // Prevent multiple simultaneous exports
+    if (isExporting || !project?.id) return; // Prevent multiple simultaneous exports
     
     setIsExporting(true);
     const projectTitle = project?.title || 'untitled';
 
     try {
-      // Check if we're using Lexical editor
-      if (getEditorState && format !== 'tree-png' && format !== 'txt') {
-        const editorState = getEditorState();
-        
-        if (format === 'docx') {
-          await exportLexicalToDocx(editorState, projectTitle);
-        } else if (format === 'pdf') {
-          await exportLexicalToPdf(editorState, projectTitle);
-        } else if (format === 'markdown') {
-          const markdown = exportLexicalToMarkdown(editorState);
-          downloadMarkdown(markdown, projectTitle);
-        }
-      } else {
-        // Fallback to legacy export for plain text content
-        if (format === 'tree-png') {
-          await exportTreeAsPng(projectTitle);
-        } else if (format === 'docx') {
-          await exportToDocx(content, projectTitle);
-        } else if (format === 'pdf') {
-          await exportToPdf(content, projectTitle);
-        } else if (format === 'txt' || format === 'markdown') {
-          // Simple text export
-          const blob = new Blob([content], { type: 'text/plain' });
+      // Use backend export API for content exports
+      if (format !== 'tree-png') {
+        const response = await fetch(`${API_BASE_URL}/projects/${project.id}/export`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-clerk-user-id': user?.id || ''
+          },
+          body: JSON.stringify({
+            format,
+            includeMetadata: false
+          })
+        });
+
+        if (response.ok) {
+          const blob = await response.blob();
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
-          a.download = `${projectTitle}.${format === 'markdown' ? 'md' : 'txt'}`;
+          a.download = `${projectTitle}.${format === 'markdown' ? 'md' : format}`;
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);
           URL.revokeObjectURL(url);
+        } else {
+          throw new Error('Export failed');
         }
+      } else {
+        // Tree export is still client-side
+        await exportTreeAsPng(projectTitle);
       }
     } catch (error) {
       console.error(`Failed to export as ${format}:`, error);

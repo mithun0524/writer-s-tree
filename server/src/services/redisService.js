@@ -1,37 +1,58 @@
 import { createClient } from 'redis';
 import logger from '../config/logger.js';
+import config from '../config/index.js';
 
 let redisClient;
+let redisAvailable = false;
 
 export const initRedis = async () => {
-  redisClient = createClient({
-    url: process.env.REDIS_URL || 'redis://localhost:6379',
-    socket: {
-      reconnectStrategy: (retries) => {
-        if (retries > 10) {
-          logger.error('Redis connection failed after 10 retries');
-          return new Error('Redis connection failed');
-        }
-        return retries * 100;
-      },
-    },
-  });
+  try {
+    redisClient = createClient({
+      host: config.redis.host,
+      port: config.redis.port,
+      password: config.redis.password,
+      retry_strategy: config.redis.retryStrategy
+    });
 
-  redisClient.on('error', (err) => logger.error('Redis Client Error', err));
-  redisClient.on('connect', () => logger.info('Redis connected'));
-  redisClient.on('ready', () => logger.info('Redis ready'));
-  redisClient.on('reconnecting', () => logger.warn('Redis reconnecting'));
+    redisClient.on('error', (err) => {
+      logger.error('Redis Client Error:', err);
+      redisAvailable = false;
+    });
+    redisClient.on('connect', () => {
+      logger.info('Redis connected');
+      redisAvailable = true;
+    });
+    redisClient.on('ready', () => {
+      logger.info('Redis ready');
+      redisAvailable = true;
+    });
+    redisClient.on('reconnecting', () => {
+      logger.warn('Redis reconnecting');
+      redisAvailable = false;
+    });
+    redisClient.on('end', () => {
+      logger.warn('Redis connection ended');
+      redisAvailable = false;
+    });
 
-  await redisClient.connect();
-  return redisClient;
+    await redisClient.connect();
+    redisAvailable = true;
+    return redisClient;
+  } catch (error) {
+    logger.warn('Redis not available, continuing without caching:', error.message);
+    redisAvailable = false;
+    return null;
+  }
 };
 
 export const getRedisClient = () => {
-  if (!redisClient) {
-    throw new Error('Redis client not initialized. Call initRedis() first.');
+  if (!redisClient || !redisAvailable) {
+    throw new Error('Redis client not available');
   }
   return redisClient;
 };
+
+export const isRedisAvailable = () => redisAvailable;
 
 export const closeRedis = async () => {
   if (redisClient) {
@@ -41,6 +62,7 @@ export const closeRedis = async () => {
 
 export const cache = {
   async get(key) {
+    if (!redisAvailable) return null;
     try {
       const data = await redisClient.get(key);
       return data ? JSON.parse(data) : null;
@@ -51,6 +73,7 @@ export const cache = {
   },
 
   async set(key, value, expirySeconds = 3600) {
+    if (!redisAvailable) return false;
     try {
       await redisClient.setEx(key, expirySeconds, JSON.stringify(value));
       return true;
@@ -61,6 +84,7 @@ export const cache = {
   },
 
   async del(key) {
+    if (!redisAvailable) return false;
     try {
       await redisClient.del(key);
       return true;
@@ -71,6 +95,7 @@ export const cache = {
   },
 
   async exists(key) {
+    if (!redisAvailable) return false;
     try {
       return await redisClient.exists(key);
     } catch (error) {
@@ -80,6 +105,7 @@ export const cache = {
   },
 
   async incr(key, expirySeconds = 60) {
+    if (!redisAvailable) return 1;
     try {
       const count = await redisClient.incr(key);
       if (count === 1) {
@@ -88,11 +114,12 @@ export const cache = {
       return count;
     } catch (error) {
       logger.error(`Cache incr error for key ${key}:`, error);
-      return 0;
+      return 1;
     }
   },
 
   async mget(keys) {
+    if (!redisAvailable) return keys.map(() => null);
     try {
       const values = await redisClient.mGet(keys);
       return values.map(v => v ? JSON.parse(v) : null);
@@ -103,6 +130,7 @@ export const cache = {
   },
 
   async hset(key, field, value) {
+    if (!redisAvailable) return false;
     try {
       await redisClient.hSet(key, field, JSON.stringify(value));
       return true;
@@ -113,6 +141,7 @@ export const cache = {
   },
 
   async hget(key, field) {
+    if (!redisAvailable) return null;
     try {
       const data = await redisClient.hGet(key, field);
       return data ? JSON.parse(data) : null;
