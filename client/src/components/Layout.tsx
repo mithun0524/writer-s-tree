@@ -14,6 +14,7 @@ export const Layout: React.FC = () => {
     const { isTreePanelOpen, isKeyboardPanelVisible, toggleKeyboardPanel } = useStore();
     const [suggestions, setSuggestions] = useState<string[]>([]);
     const [suggestionInsertHandler, setSuggestionInsertHandler] = useState<((index: number) => void) | null>(null);
+    const [getEditorState, setGetEditorState] = useState<(() => any) | null>(null);
 
     const handleSuggestionsChange = useCallback((newSuggestions: string[]) => {
       setSuggestions(newSuggestions);
@@ -21,6 +22,10 @@ export const Layout: React.FC = () => {
 
     const handleSuggestionInsert = useCallback((handler: (index: number) => void) => {
       setSuggestionInsertHandler(() => handler);
+    }, []);
+
+    const handleEditorReady = useCallback((getState: () => any) => {
+      setGetEditorState(() => getState);
     }, []);
 
     const handleSuggestionSelect = useCallback((index: number) => {
@@ -35,7 +40,7 @@ export const Layout: React.FC = () => {
         <ProjectProvider projectId={id}>
             <WelcomeModal />
             <div className="flex flex-col h-screen w-screen overflow-hidden bg-background-primary text-text-primary font-sans selection:bg-accent-focus/20">
-              <Header />
+              <Header getEditorState={getEditorState} />
               
               <main className="flex-1 flex overflow-hidden relative">
                 {/* Editor Panel (60% or 100%) */}
@@ -43,6 +48,7 @@ export const Layout: React.FC = () => {
                   <EditorPanel 
                     onSuggestionsChange={handleSuggestionsChange}
                     onSuggestionInsert={handleSuggestionInsert}
+                    onEditorReady={handleEditorReady}
                   />
                 </section>
 

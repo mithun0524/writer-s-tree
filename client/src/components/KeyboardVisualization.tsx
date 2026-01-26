@@ -27,13 +27,13 @@ export const KeyboardVisualization: React.FC<KeyboardVisualizationProps> = ({
       setActiveKey(key);
       setTimeout(() => setActiveKey(null), 150);
 
-      // Handle number keys for suggestion selection
-      if (['1', '2', '3'].includes(e.key) && suggestions.length > 0) {
-        const index = parseInt(e.key) - 1;
-        if (index < suggestions.length) {
+      // Handle Q/W/E/R/T/Y keys for suggestion selection
+      if (['Q', 'W', 'E', 'R', 'T', 'Y'].includes(key) && suggestions.length > 0) {
+        const keyIndex = ['Q', 'W', 'E', 'R', 'T', 'Y'].indexOf(key);
+        if (keyIndex < suggestions.length) {
           e.preventDefault();
-          setSelectedSuggestion(index);
-          onSuggestionSelect(index);
+          setSelectedSuggestion(keyIndex);
+          onSuggestionSelect(keyIndex);
           setTimeout(() => setSelectedSuggestion(null), 200);
         }
       }
@@ -55,69 +55,68 @@ export const KeyboardVisualization: React.FC<KeyboardVisualizationProps> = ({
         <Keyboard size={16} />
       </button>
       
-      {/* Keyboard (Visual) */}
-      <div className="flex flex-col gap-1">
-        <div className="flex gap-1">
-           {KEYS[0].slice(0, 6).map(key => (
-              <Key key={key} char={key} active={activeKey === key} />
-           ))}
-           <span className="text-text-tertiary text-xs self-center ml-2">...</span>
-        </div>
+      {/* Full Keyboard (Visual) - Single Line */}
+      <div className="flex gap-1">
+        {KEYS.flat().map(key => {
+          const suggestionIndex = ['Q', 'W', 'E', 'R', 'T', 'Y'].indexOf(key);
+          const hasSuggestion = suggestionIndex >= 0 && suggestionIndex < suggestions.length;
+          
+          return (
+            <Key 
+              key={key} 
+              char={key} 
+              active={activeKey === key}
+              hasSuggestion={hasSuggestion}
+              suggestion={hasSuggestion ? suggestions[suggestionIndex] : undefined}
+            />
+          );
+        })}
       </div>
 
-      {/* Suggestions */}
-      <div className="flex gap-6 items-center">
-        <span className="text-text-tertiary text-xs font-mono">Suggestions:</span>
-        {suggestions.length > 0 ? (
-          suggestions.map((word, index) => (
-            <Suggestion 
-              key={index}
-              number={index + 1} 
-              word={word}
-              isSelected={selectedSuggestion === index}
-              onClick={() => onSuggestionSelect(index)}
-            />
-          ))
-        ) : (
-          <span className="text-text-tertiary text-xs italic">Start typing...</span>
+      {/* Suggestions Info */}
+      <div className="flex gap-4 items-center">
+        {suggestions.length > 0 && (
+          suggestions.map((word, index) => {
+            const key = ['Q', 'W', 'E', 'R', 'T', 'Y'][index];
+            return (
+              <div 
+                key={index}
+                className={`flex items-center gap-2 text-sm transition-all ${
+                  selectedSuggestion === index ? 'scale-105 font-semibold' : ''
+                }`}
+              >
+                <span className="font-mono text-accent-focus bg-accent-focus/10 px-2 py-1 rounded">
+                  {key}
+                </span>
+                <span className="text-text-secondary">{word}</span>
+              </div>
+            );
+          })
         )}
       </div>
     </div>
   );
 };
 
-const Key: React.FC<{ char: string; active: boolean }> = ({ char, active }) => (
+const Key: React.FC<{ 
+  char: string; 
+  active: boolean;
+  hasSuggestion?: boolean;
+  suggestion?: string;
+}> = ({ char, active, hasSuggestion, suggestion }) => (
   <div className={`
-    w-8 h-8 rounded flex items-center justify-center font-mono text-xs transition-all duration-100 ease-out
+    w-10 h-10 rounded flex flex-col items-center justify-center font-mono text-xs transition-all duration-100 ease-out relative
     ${active 
       ? 'bg-accent-focus text-white scale-110 shadow-md transform -translate-y-1' 
+      : hasSuggestion
+      ? 'bg-accent-focus/20 border-2 border-accent-focus text-accent-focus'
       : 'bg-background-secondary border border-gray-200 text-text-secondary'}
   `}>
-    {char}
+    <span className="font-semibold">{char}</span>
+    {hasSuggestion && suggestion && (
+      <span className="text-[8px] absolute -bottom-1 text-accent-focus/70 truncate max-w-full px-1">
+        {suggestion.substring(0, 4)}
+      </span>
+    )}
   </div>
-);
-
-const Suggestion: React.FC<{ 
-  number: number; 
-  word: string; 
-  isSelected: boolean;
-  onClick: () => void;
-}> = ({ number, word, isSelected, onClick }) => (
-  <button 
-    className={`group flex items-center gap-2 font-mono text-sm transition-all duration-200 ${
-      isSelected ? 'text-white' : 'text-text-primary hover:text-text-primary'
-    }`}
-    onClick={onClick}
-  >
-     <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs border transition-all duration-200 ${
-       isSelected 
-         ? 'bg-green-500 text-white border-green-500 scale-110' 
-         : 'bg-background-secondary text-accent-focus border-gray-200 group-hover:bg-accent-focus group-hover:text-white'
-     }`}>
-       {number}
-     </span>
-     <span className={`group-hover:underline decoration-accent-focus underline-offset-4 transition-all ${
-       isSelected ? 'font-bold' : ''
-     }`}>{word}</span>
-  </button>
 );

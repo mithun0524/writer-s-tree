@@ -17,7 +17,7 @@ interface Particle {
   size: number;
 }
 
-export const SeasonalEffects: React.FC<SeasonalEffectsProps> = ({ season, isFullyGrown }) => {
+export const SeasonalEffects: React.FC<SeasonalEffectsProps> = React.memo(({ season }) => {
   const [particles, setParticles] = useState<Particle[]>([]);
 
   useEffect(() => {
@@ -59,7 +59,7 @@ export const SeasonalEffects: React.FC<SeasonalEffectsProps> = ({ season, isFull
     }));
 
     setParticles(newParticles);
-  }, [season]);
+  }, [season]); // Only regenerate when season changes
 
   if (particles.length === 0) return null;
 
@@ -176,4 +176,4 @@ export const SeasonalEffects: React.FC<SeasonalEffectsProps> = ({ season, isFull
       </AnimatePresence>
     </div>
   );
-};
+});

@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Download, FileText, FileType, Image } from 'lucide-react';
+import { Download, FileText, FileType, Image, FileCode } from 'lucide-react';
 
 interface ExportMenuProps {
-  onExport: (format: 'txt' | 'docx' | 'pdf' | 'tree-png') => void;
+  onExport: (format: 'txt' | 'docx' | 'pdf' | 'markdown' | 'tree-png') => void;
 }
 
 export const ExportMenu: React.FC<ExportMenuProps> = ({ onExport }) => {
@@ -22,7 +22,7 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({ onExport }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen]);
 
-  const handleExport = (format: 'txt' | 'docx' | 'pdf' | 'tree-png') => {
+  const handleExport = (format: 'txt' | 'docx' | 'pdf' | 'markdown' | 'tree-png') => {
     onExport(format);
     setIsOpen(false);
   };
@@ -59,6 +59,13 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({ onExport }) => {
           >
             <FileText size={16} className="text-text-tertiary" />
             <span>Export as .pdf</span>
+          </button>
+          <button
+            onClick={() => handleExport('markdown')}
+            className="w-full px-4 py-2 text-left text-sm flex items-center gap-3 hover:bg-background-secondary transition-colors"
+          >
+            <FileCode size={16} className="text-text-tertiary" />
+            <span>Export as .md</span>
           </button>
           <div className="h-px bg-border-light my-1" />
           <button

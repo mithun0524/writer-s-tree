@@ -206,7 +206,7 @@ const Branch: React.FC<BranchProps> = React.memo(({ x, y, angle, depth, maxDepth
 export const TreePanel: React.FC = () => {
   const { project, wordCount, updateSettings, settingsConfigured } = useProjectContext();
   const [showOverflowNotice, setShowOverflowNotice] = useState(false);
-  const [fallenPetals, setFallenPetals] = useState<FallenPetal[]>([]);
+  const [fallenPetals] = useState<FallenPetal[]>([]);
   const [isFullyGrown, setIsFullyGrown] = useState(false);
   const [season, setSeason] = useState<Season>((project?.treeSeason as Season) || 'spring');
   const [zoom, setZoom] = useState(1);

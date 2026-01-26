@@ -5,8 +5,13 @@ import { useNavigate } from 'react-router-dom';
 import { useProjectContext } from '@/context/ProjectContext';
 import { ExportMenu } from './ExportMenu';
 import { exportToDocx, exportToPdf, exportTreeAsPng } from '@/utils/exportUtils';
+import { exportLexicalToDocx, exportLexicalToPdf, exportLexicalToMarkdown, downloadMarkdown } from '@/utils/lexicalExportUtils';
 
-export const Header: React.FC = () => {
+interface HeaderProps {
+  getEditorState?: (() => any) | null;
+}
+
+export const Header: React.FC<HeaderProps> = ({ getEditorState }) => {
   const { project, updateSettings, wordCount, content, settingsConfigured, setSettingsConfigured } = useProjectContext();
   const navigate = useNavigate();
   const [isSettingsOpen, setIsSettingsOpen] = useState(!settingsConfigured);
@@ -37,30 +42,45 @@ export const Header: React.FC = () => {
     }
   };
 
-  const handleExport = async (format: 'txt' | 'docx' | 'pdf' | 'tree-png') => {
+  const handleExport = async (format: 'txt' | 'docx' | 'pdf' | 'markdown' | 'tree-png') => {
     if (isExporting) return; // Prevent multiple simultaneous exports
     
     setIsExporting(true);
     const projectTitle = project?.title || 'untitled';
 
     try {
-      if (format === 'tree-png') {
-        await exportTreeAsPng(projectTitle);
-      } else if (format === 'docx') {
-        await exportToDocx(content, projectTitle);
-      } else if (format === 'pdf') {
-        await exportToPdf(content, projectTitle);
-      } else if (format === 'txt') {
-        // Simple text export
-        const blob = new Blob([content], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${projectTitle}.txt`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+      // Check if we're using Lexical editor
+      if (getEditorState && format !== 'tree-png' && format !== 'txt') {
+        const editorState = getEditorState();
+        
+        if (format === 'docx') {
+          await exportLexicalToDocx(editorState, projectTitle);
+        } else if (format === 'pdf') {
+          await exportLexicalToPdf(editorState, projectTitle);
+        } else if (format === 'markdown') {
+          const markdown = exportLexicalToMarkdown(editorState);
+          downloadMarkdown(markdown, projectTitle);
+        }
+      } else {
+        // Fallback to legacy export for plain text content
+        if (format === 'tree-png') {
+          await exportTreeAsPng(projectTitle);
+        } else if (format === 'docx') {
+          await exportToDocx(content, projectTitle);
+        } else if (format === 'pdf') {
+          await exportToPdf(content, projectTitle);
+        } else if (format === 'txt' || format === 'markdown') {
+          // Simple text export
+          const blob = new Blob([content], { type: 'text/plain' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${projectTitle}.${format === 'markdown' ? 'md' : 'txt'}`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }
       }
     } catch (error) {
       console.error(`Failed to export as ${format}:`, error);
@@ -118,7 +138,7 @@ export const Header: React.FC = () => {
     </header>
 
     {isSettingsOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setIsSettingsOpen(false)}>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[9999] p-4" onClick={() => setIsSettingsOpen(false)}>
             <div className="bg-white rounded-xl shadow-level4 w-full max-w-sm p-6" onClick={e => e.stopPropagation()}>
                 <h3 className="font-serif text-xl text-text-primary mb-4">Project Settings</h3>
                 <div className="space-y-4">
