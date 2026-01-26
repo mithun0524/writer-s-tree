@@ -7,11 +7,20 @@ let redisAvailable = false;
 
 export const initRedis = async () => {
   try {
+    // Skip Redis initialization in production if no Redis host is configured
+    if (config.env === 'production' && !process.env.REDIS_HOST) {
+      logger.warn('Redis not configured in production, skipping initialization');
+      redisAvailable = false;
+      return null;
+    }
+
     redisClient = createClient({
       host: config.redis.host,
       port: config.redis.port,
       password: config.redis.password,
-      retry_strategy: config.redis.retryStrategy
+      retry_strategy: config.redis.retryStrategy,
+      connect_timeout: 5000, // 5 second timeout
+      lazyConnect: false
     });
 
     redisClient.on('error', (err) => {
@@ -35,7 +44,13 @@ export const initRedis = async () => {
       redisAvailable = false;
     });
 
-    await redisClient.connect();
+    // Add timeout to connect
+    const connectPromise = redisClient.connect();
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Redis connection timeout')), 10000);
+    });
+
+    await Promise.race([connectPromise, timeoutPromise]);
     redisAvailable = true;
     return redisClient;
   } catch (error) {
