@@ -18,6 +18,12 @@ import { errorHandler, notFound } from './middleware/errorHandler.js';
 import { initializeWebSocket } from './websocket.js';
 import { initRedis, closeRedis } from './services/redisService.js';
 
+// Debug logging
+console.log('🚀 Starting Writer\'s Tree server...');
+console.log('Environment:', config.env);
+console.log('Port:', config.port);
+console.log('Database URL exists:', !!process.env.DATABASE_URL);
+
 const app = express();
 const server = createServer(app);
 
