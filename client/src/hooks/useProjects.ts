@@ -1,22 +1,34 @@
 import { useState, useEffect } from 'react';
-import { useUser } from '@clerk/clerk-react';
+import { useUser, useAuth } from '@clerk/clerk-react';
 import { API_BASE_URL } from '@/config';
 import type { Project } from '@/store/useStore';
 
 export const useProjects = () => {
     const { user } = useUser();
+    const { getToken } = useAuth();
     const [projects, setProjects] = useState<Project[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
+    // Helper function for authenticated API calls
+    const authenticatedFetch = async (url: string, options: RequestInit = {}) => {
+        const token = await getToken();
+        return fetch(url, {
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+                ...options.headers,
+            },
+        });
+    };
 
     const fetchProjects = async () => {
         if (!user?.id) return;
         
         try {
             setLoading(true);
-            const res = await fetch(`${API_BASE_URL}/projects`, {
-                headers: { 'x-clerk-user-id': user.id }
-            });
+            const res = await authenticatedFetch(`${API_BASE_URL}/projects`);
             const data = await res.json();
             
             if (data.success) {
@@ -54,12 +66,8 @@ export const useProjects = () => {
         if (!user?.id) return null;
 
         try {
-            const res = await fetch(`${API_BASE_URL}/projects`, {
+            const res = await authenticatedFetch(`${API_BASE_URL}/projects`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-clerk-user-id': user.id
-                },
                 body: JSON.stringify({
                     title,
                     wordGoal
@@ -84,9 +92,8 @@ export const useProjects = () => {
          if (!user?.id) return;
          
          try {
-            const res = await fetch(`${API_BASE_URL}/projects/${id}`, {
-                method: 'DELETE',
-                headers: { 'x-clerk-user-id': user.id }
+            const res = await authenticatedFetch(`${API_BASE_URL}/projects/${id}`, {
+                method: 'DELETE'
             });
             const data = await res.json();
             if (data.success) {
@@ -101,12 +108,8 @@ export const useProjects = () => {
         if (!user?.id) return;
         
         try {
-            const res = await fetch(`${API_BASE_URL}/projects/${id}`, {
+            const res = await authenticatedFetch(`${API_BASE_URL}/projects/${id}`, {
                 method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-clerk-user-id': user.id
-                },
                 body: JSON.stringify({ status: 'archived' })
             });
             const data = await res.json();
@@ -122,12 +125,8 @@ export const useProjects = () => {
         if (!user?.id) return;
         
         try {
-            const res = await fetch(`${API_BASE_URL}/projects/${id}`, {
+            const res = await authenticatedFetch(`${API_BASE_URL}/projects/${id}`, {
                 method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-clerk-user-id': user.id
-                },
                 body: JSON.stringify({ status: 'active' })
             });
             const data = await res.json();

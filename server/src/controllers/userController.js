@@ -18,7 +18,7 @@ export const syncUser = async (req, res, next) => {
 
 export const getMe = async (req, res, next) => {
   try {
-    const user = await findUserById(req.userId);
+    const user = await findUserById(req.auth.userId);
     
     if (!user) {
       return res.status(404).json({
@@ -40,7 +40,7 @@ export const getMe = async (req, res, next) => {
 export const updatePreferences = async (req, res, next) => {
   try {
     const { preferences } = req.body;
-    const user = await updateUserPreferences(req.userId, preferences);
+    const user = await updateUserPreferences(req.auth.userId, preferences);
 
     res.json({
       success: true,
@@ -54,7 +54,7 @@ export const updatePreferences = async (req, res, next) => {
 
 export const deleteMe = async (req, res, next) => {
   try {
-    await deleteUser(req.userId);
+    await deleteUser(req.auth.userId);
 
     res.json({
       success: true,

@@ -1,5 +1,5 @@
 import express from 'express';
-import { authenticate } from '../middleware/auth.js';
+import { clerkAuth } from '../middleware/clerkAuth.js';
 import { validate } from '../middleware/validate.js';
 import { rateLimiter } from '../middleware/rateLimiter.js';
 import { getSuggestions } from '../controllers/suggestionsController.js';
@@ -12,6 +12,6 @@ const suggestionsSchema = Joi.object({
   limit: Joi.number().integer().min(1).max(5).default(3)
 });
 
-router.post('/', authenticate, rateLimiter(30, 60), validate(suggestionsSchema), getSuggestions);
+router.post('/', clerkAuth, rateLimiter(30, 60), validate(suggestionsSchema), getSuggestions);
 
 export default router;

@@ -3,7 +3,7 @@ import { cache } from '../services/redisService.js';
 
 export const createProject = async (req, res, next) => {
   try {
-    const project = await Project.createProject(req.userId, req.body);
+    const project = await Project.createProject(req.auth.userId, req.body);
 
     res.status(201).json({
       success: true,
@@ -19,7 +19,7 @@ export const getProjects = async (req, res, next) => {
   try {
     const { status, limit = 50, offset = 0 } = req.query;
 
-    const projects = await Project.getUserProjects(req.userId, {
+    const projects = await Project.getUserProjects(req.auth.userId, {
       status,
       limit: parseInt(limit),
       offset: parseInt(offset)
@@ -51,7 +51,7 @@ export const getProject = async (req, res, next) => {
 
     if (!project) {
       // Fetch from database
-      project = await Project.getProjectById(projectId, req.userId);
+      project = await Project.getProjectById(projectId, req.auth.userId);
 
       if (!project) {
         return res.status(404).json({
@@ -79,7 +79,7 @@ export const updateProject = async (req, res, next) => {
     const { projectId } = req.params;
     const cacheKey = `project:${projectId}`;
 
-    const project = await Project.updateProject(projectId, req.userId, req.body);
+    const project = await Project.updateProject(projectId, req.auth.userId, req.body);
 
     if (!project) {
       return res.status(404).json({
@@ -108,7 +108,7 @@ export const deleteProject = async (req, res, next) => {
     const { permanent = false } = req.query;
     const cacheKey = `project:${projectId}`;
 
-    await Project.deleteProject(projectId, req.userId, permanent === 'true');
+    await Project.deleteProject(projectId, req.auth.userId, permanent === 'true');
 
     // Invalidate cache
     await cache.del(cacheKey);
@@ -126,7 +126,7 @@ export const restoreProject = async (req, res, next) => {
   try {
     const { projectId } = req.params;
 
-    const project = await Project.restoreProject(projectId, req.userId);
+    const project = await Project.restoreProject(projectId, req.auth.userId);
 
     if (!project) {
       return res.status(404).json({
@@ -171,7 +171,7 @@ export const updateContent = async (req, res, next) => {
       }
     }
 
-    const result = await Project.updateProjectContent(projectId, req.userId, {
+    const result = await Project.updateProjectContent(projectId, req.auth.userId, {
       content,
       wordCount,
       characterCount,
@@ -192,7 +192,7 @@ export const getVersionHistory = async (req, res, next) => {
   try {
     const { projectId } = req.params;
 
-    const versions = await Project.getVersionHistory(projectId, req.userId);
+    const versions = await Project.getVersionHistory(projectId, req.auth.userId);
 
     if (!versions) {
       return res.status(404).json({
@@ -215,7 +215,7 @@ export const getVersion = async (req, res, next) => {
   try {
     const { projectId, versionId } = req.params;
 
-    const version = await Project.getVersionById(versionId, projectId, req.userId);
+    const version = await Project.getVersionById(versionId, projectId, req.auth.userId);
 
     if (!version) {
       return res.status(404).json({
@@ -238,7 +238,7 @@ export const restoreVersion = async (req, res, next) => {
   try {
     const { projectId, versionId } = req.params;
 
-    const result = await Project.restoreVersion(versionId, projectId, req.userId);
+    const result = await Project.restoreVersion(versionId, projectId, req.auth.userId);
 
     if (!result) {
       return res.status(404).json({

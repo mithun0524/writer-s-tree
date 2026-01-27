@@ -1,19 +1,29 @@
-import { useUser } from '@clerk/clerk-react';
+import { useUser, useAuth } from '@clerk/clerk-react';
 import { API_BASE_URL } from '@/config';
 
 export const useAnalytics = () => {
   const { user } = useUser();
+  const { getToken } = useAuth();
+
+  // Helper function for authenticated API calls
+  const authenticatedFetch = async (url: string, options: RequestInit = {}) => {
+    const token = await getToken();
+    return fetch(url, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        ...options.headers,
+      },
+    });
+  };
 
   const trackEvent = async (eventType: string, metadata?: Record<string, any>) => {
     if (!user?.id) return;
 
     try {
-      await fetch(`${API_BASE_URL}/analytics/event`, {
+      await authenticatedFetch(`${API_BASE_URL}/analytics/event`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-clerk-user-id': user.id
-        },
         body: JSON.stringify({
           eventType,
           metadata
@@ -28,9 +38,7 @@ export const useAnalytics = () => {
     if (!user?.id) return null;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/analytics/stats`, {
-        headers: { 'x-clerk-user-id': user.id }
-      });
+      const response = await authenticatedFetch(`${API_BASE_URL}/analytics/stats`);
       const data = await response.json();
       return data.success ? data.data : null;
     } catch (error) {
@@ -43,9 +51,7 @@ export const useAnalytics = () => {
     if (!user?.id) return null;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/analytics/streaks`, {
-        headers: { 'x-clerk-user-id': user.id }
-      });
+      const response = await authenticatedFetch(`${API_BASE_URL}/analytics/streaks`);
       const data = await response.json();
       return data.success ? data.data : null;
     } catch (error) {

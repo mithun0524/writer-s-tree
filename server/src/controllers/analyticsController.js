@@ -5,7 +5,7 @@ import { cache } from '../services/redisService.js';
 export const getStats = async (req, res, next) => {
   try {
     const { period = 'month' } = req.query;
-    const cacheKey = `stats:${req.userId}:${period}`;
+    const cacheKey = `stats:${req.auth.userId}:${period}`;
     
     // Check cache first
     let stats = await cache.get(cacheKey);
@@ -38,19 +38,19 @@ export const getStats = async (req, res, next) => {
     // Get total projects
     const projectsResult = await query(
       'SELECT COUNT(*) as count FROM projects WHERE user_id = $1',
-      [req.userId]
+      [req.auth.userId]
     );
 
     // Get completed projects
     const completedResult = await query(
       'SELECT COUNT(*) as count FROM projects WHERE user_id = $1 AND status = $2',
-      [req.userId, 'completed']
+      [req.auth.userId, 'completed']
     );
 
     // Get total words written
     const wordsResult = await query(
       'SELECT SUM(current_word_count) as total FROM projects WHERE user_id = $1',
-      [req.userId]
+      [req.auth.userId]
     );
 
     // Get writing streak
@@ -60,13 +60,13 @@ export const getStats = async (req, res, next) => {
        WHERE user_id = $1 
        AND date >= CURRENT_DATE - INTERVAL '30 days'
        ORDER BY date DESC`,
-      [req.userId]
+      [req.auth.userId]
     );
 
     // Get milestones
     const milestonesResult = await query(
       'SELECT milestone_type, COUNT(*) as count FROM milestones WHERE user_id = $1 GROUP BY milestone_type',
-      [req.userId]
+      [req.auth.userId]
     );
 
     // Get period stats if applicable
@@ -78,7 +78,7 @@ export const getStats = async (req, res, next) => {
          WHERE user_id = $1 
          AND event_type = 'content_saved' 
          AND created_at >= $2`,
-        [req.userId, startDate]
+        [req.auth.userId, startDate]
       );
 
       const periodDays = await query(
@@ -87,7 +87,7 @@ export const getStats = async (req, res, next) => {
          WHERE user_id = $1 
          AND event_type = 'content_saved' 
          AND created_at >= $2`,
-        [req.userId, startDate]
+        [req.auth.userId, startDate]
       );
 
       periodStats = {
@@ -137,7 +137,7 @@ export const trackEvent = async (req, res, next) => {
     await query(
       `INSERT INTO analytics_events (user_id, project_id, event_type, metadata)
        VALUES ($1, $2, $3, $4)`,
-      [req.userId, projectId || null, eventType, metadata || {}]
+      [req.auth.userId, projectId || null, eventType, metadata || {}]
     );
 
     // Update writing streak if content_saved event
@@ -149,14 +149,14 @@ export const trackEvent = async (req, res, next) => {
          VALUES ($1, $2, $3)
          ON CONFLICT (user_id, date) 
          DO UPDATE SET word_count = writing_streaks.word_count + $3`,
-        [req.userId, today, metadata?.wordCount || 0]
+        [req.auth.userId, today, metadata?.wordCount || 0]
       );
       
       // Invalidate stats cache
-      await cache.del(`stats:${req.userId}:week`);
-      await cache.del(`stats:${req.userId}:month`);
-      await cache.del(`stats:${req.userId}:year`);
-      await cache.del(`streaks:${req.userId}`);
+      await cache.del(`stats:${req.auth.userId}:week`);
+      await cache.del(`stats:${req.auth.userId}:month`);
+      await cache.del(`stats:${req.auth.userId}:year`);
+      await cache.del(`streaks:${req.auth.userId}`);
     }
 
     res.status(201).json({
@@ -171,7 +171,7 @@ export const trackEvent = async (req, res, next) => {
 
 export const getStreaks = async (req, res, next) => {
   try {
-    const cacheKey = `streaks:${req.userId}`;
+    const cacheKey = `streaks:${req.auth.userId}`;
     
     // Check cache first
     let streaksData = await cache.get(cacheKey);
@@ -189,7 +189,7 @@ export const getStreaks = async (req, res, next) => {
        WHERE user_id = $1 
        ORDER BY date DESC 
        LIMIT 30`,
-      [req.userId]
+      [req.auth.userId]
     );
 
     // Calculate current streak

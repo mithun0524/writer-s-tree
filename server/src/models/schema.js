@@ -2,15 +2,21 @@ import { query } from '../config/database.js';
 
 export const createTables = async () => {
   const queries = [
-    // Users table (simplified - Clerk handles auth)
+    // Users table (synced from Clerk via webhooks)
     `CREATE TABLE IF NOT EXISTS users (
       id VARCHAR(255) PRIMARY KEY,
-      clerk_user_id VARCHAR(255) UNIQUE NOT NULL,
       email VARCHAR(255) UNIQUE NOT NULL,
       full_name VARCHAR(255),
-      preferences JSONB DEFAULT '{}',
+      profile_image_url TEXT,
+      clerk_created_at TIMESTAMP,
       created_at TIMESTAMP DEFAULT NOW(),
-      updated_at TIMESTAMP DEFAULT NOW()
+      updated_at TIMESTAMP DEFAULT NOW(),
+      last_login TIMESTAMP,
+      
+      -- User preferences (Writer's Tree specific)
+      preferences JSONB DEFAULT '{}',
+      subscription_tier VARCHAR(50) DEFAULT 'free',
+      subscription_expires_at TIMESTAMP
     )`,
 
     // Projects table
@@ -87,7 +93,6 @@ export const createTables = async () => {
     )`,
 
     // Indexes
-    `CREATE INDEX IF NOT EXISTS idx_users_clerk_id ON users(clerk_user_id)`,
     `CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)`,
     `CREATE INDEX IF NOT EXISTS idx_projects_user_id ON projects(user_id)`,
     `CREATE INDEX IF NOT EXISTS idx_projects_status ON projects(status)`,

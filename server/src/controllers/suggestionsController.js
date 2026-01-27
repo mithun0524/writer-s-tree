@@ -46,7 +46,7 @@ export const getSuggestions = async (req, res, next) => {
     // In production, implement rate limiting per user
     // For now, log the request for monitoring
     logger.info('Suggestion request', {
-      userId: req.userId,
+      userId: req.auth.userId,
       contextLength: context.length,
       suggestionsCount: suggestions.length
     });

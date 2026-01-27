@@ -1,14 +1,12 @@
 import { Layout } from '@/components/Layout';
 import { Dashboard } from '@/components/Dashboard';
-import { UserSync } from '@/components/UserSync';
 import { SignedIn, SignedOut, RedirectToSignIn, SignIn, SignUp } from "@clerk/clerk-react";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 
 function App() {
   return (
     <BrowserRouter>
-      <UserSync>
-        <Routes>
+      <Routes>
         <Route
           path="/"
           element={
@@ -53,11 +51,14 @@ function App() {
            element={<div className="flex items-center justify-center h-screen bg-background-secondary"><SignIn routing="path" path="/sign-in" /></div>}
         />
         <Route
-           path="/sign-up/*"
-           element={<div className="flex items-center justify-center h-screen bg-background-secondary"><SignUp routing="path" path="/sign-up" /></div>}
+          path="/sign-up/*"
+          element={
+            <div className="flex items-center justify-center h-screen bg-background-secondary">
+              <SignUp routing="path" path="/sign-up" />
+            </div>
+          }
         />
       </Routes>
-      </UserSync>
     </BrowserRouter>
   );
 }

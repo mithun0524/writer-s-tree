@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useUser } from '@clerk/clerk-react';
+import { useUser, useAuth } from '@clerk/clerk-react';
 import io, { Socket } from 'socket.io-client';
 import { debounce } from 'lodash';
 import { API_BASE_URL, WS_URL } from '@/config';
@@ -7,6 +7,7 @@ import type { Project } from '@/store/useStore';
 
 export const useProject = (projectId: string | undefined) => {
   const { user } = useUser();
+  const { getToken } = useAuth();
   const [project, setProject] = useState<Project | null>(null);
   const [content, setContent] = useState('');
   const [wordCount, setWordCount] = useState(0);
@@ -24,6 +25,19 @@ export const useProject = (projectId: string | undefined) => {
     contentRef.current = content;
     versionRef.current = version;
   }, [content, version]);
+
+  // Helper function for authenticated API calls
+  const authenticatedFetch = async (url: string, options: RequestInit = {}) => {
+    const token = await getToken();
+    return fetch(url, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        ...options.headers,
+      },
+    });
+  };
 
   // Initialize WebSocket
   useEffect(() => {
@@ -72,9 +86,7 @@ export const useProject = (projectId: string | undefined) => {
 
     const fetchProject = async () => {
         try {
-            const res = await fetch(`${API_BASE_URL}/projects/${projectId}`, {
-                headers: { 'x-clerk-user-id': user.id }
-            });
+            const res = await authenticatedFetch(`${API_BASE_URL}/projects/${projectId}`);
             const data = await res.json();
             
             if (data.success) {
@@ -101,12 +113,8 @@ export const useProject = (projectId: string | undefined) => {
     setSaving(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/projects/${projectId}`, {
+      const response = await authenticatedFetch(`${API_BASE_URL}/projects/${projectId}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-clerk-user-id': user.id
-        },
         body: JSON.stringify({
           content: newContent,
           word_count: newWordCount,
@@ -178,12 +186,8 @@ export const useProject = (projectId: string | undefined) => {
           if (updates.treeSpecies) payload.tree_species = updates.treeSpecies;
           if (updates.treeSeason) payload.tree_season = updates.treeSeason;
 
-          await fetch(`${API_BASE_URL}/projects/${projectId}`, {
+          await authenticatedFetch(`${API_BASE_URL}/projects/${projectId}`, {
               method: 'PUT', // or PATCH if supported, backend uses PUT
-              headers: { 
-                  'Content-Type': 'application/json',
-                  'x-clerk-user-id': user.id 
-              },
               body: JSON.stringify(payload)
           });
       } catch (e) {

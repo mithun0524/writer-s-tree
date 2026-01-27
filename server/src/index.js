@@ -17,6 +17,8 @@ import analyticsRoutes from './routes/analytics.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 import { initializeWebSocket } from './websocket.js';
 import { initRedis, closeRedis } from './services/redisService.js';
+import { clerkWebhookHandler } from './webhooks/clerkWebhook.js';
+import { clerkAuth } from './middleware/clerkAuth.js';
 
 // Debug logging
 console.log('🚀 Starting Writer\'s Tree server...');
@@ -33,7 +35,7 @@ app.use(cors({
   origin: config.frontendUrl,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-clerk-user-id']
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 // Compression
@@ -98,11 +100,26 @@ app.get('/health', async (req, res) => {
 // API routes
 const API_PREFIX = `/api/${config.apiVersion}`;
 
+// Test endpoint for development (remove in production)
+if (config.env === 'development') {
+  app.get(`${API_PREFIX}/test-auth`, clerkAuth, (req, res) => {
+    res.json({
+      success: true,
+      message: 'Authentication successful!',
+      userId: req.auth.userId,
+      user: req.auth
+    });
+  });
+}
+
 // Swagger documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   customCss: '.swagger-ui .topbar { display: none }',
   customSiteTitle: "Writer's Tree API Documentation"
 }));
+
+// Webhook endpoint (Clerk sends user events)
+app.post(`${API_PREFIX}/webhooks/clerk`, express.raw({ type: 'application/json' }), clerkWebhookHandler);
 
 app.use(`${API_PREFIX}/users`, userRoutes);
 app.use(`${API_PREFIX}/projects`, apiLimiter, projectRoutes);

@@ -1,7 +1,7 @@
 import express from 'express';
 import * as projectController from '../controllers/projectController.js';
 import { exportProject, exportTree } from '../controllers/exportController.js';
-import { authenticate } from '../middleware/auth.js';
+import { clerkAuth } from '../middleware/clerkAuth.js';
 import { validate, createProjectSchema, updateProjectSchema, updateContentSchema } from '../middleware/validate.js';
 import Joi from 'joi';
 
@@ -21,7 +21,7 @@ const exportTreeSchema = Joi.object({
 });
 
 // All routes require authentication
-router.use(authenticate);
+router.use(clerkAuth);
 
 // Project CRUD
 router.post('/', validate(createProjectSchema), projectController.createProject);

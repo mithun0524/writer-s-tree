@@ -3,7 +3,7 @@ import logger from '../config/logger.js';
 
 export const rateLimiter = (maxRequests = 100, windowSeconds = 60) => {
   return async (req, res, next) => {
-    const userId = req.userId || req.ip;
+    const userId = req.auth?.userId || req.ip;
     const key = `ratelimit:${userId}:${req.path}`;
 
     try {

@@ -1,5 +1,5 @@
 import express from 'express';
-import { authenticate } from '../middleware/auth.js';
+import { clerkAuth } from '../middleware/clerkAuth.js';
 import { validate } from '../middleware/validate.js';
 import { getStats, trackEvent, getStreaks } from '../controllers/analyticsController.js';
 import Joi from 'joi';
@@ -21,8 +21,8 @@ const trackEventSchema = Joi.object({
   metadata: Joi.object().optional()
 });
 
-router.get('/stats', authenticate, getStats);
-router.get('/streaks', authenticate, getStreaks);
-router.post('/event', authenticate, validate(trackEventSchema), trackEvent);
+router.get('/stats', clerkAuth, getStats);
+router.get('/streaks', clerkAuth, getStreaks);
+router.post('/event', clerkAuth, validate(trackEventSchema), trackEvent);
 
 export default router;

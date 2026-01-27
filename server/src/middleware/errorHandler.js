@@ -6,7 +6,7 @@ export const errorHandler = (err, req, res, next) => {
     stack: err.stack,
     path: req.path,
     method: req.method,
-    userId: req.userId
+    userId: req.auth?.userId
   });
 
   // Default error

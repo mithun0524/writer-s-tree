@@ -1,11 +1,25 @@
 import { useState, useEffect } from 'react';
-import { useUser } from '@clerk/clerk-react';
+import { useUser, useAuth } from '@clerk/clerk-react';
 import { API_BASE_URL } from '@/config';
 
 export const useWordSuggestions = (content: string, cursorPosition: number) => {
   const { user } = useUser();
+  const { getToken } = useAuth();
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+
+  // Helper function for authenticated API calls
+  const authenticatedFetch = async (url: string, options: RequestInit = {}) => {
+    const token = await getToken();
+    return fetch(url, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        ...options.headers,
+      },
+    });
+  };
 
   useEffect(() => {
     // Get the current word being typed
@@ -28,12 +42,8 @@ export const useWordSuggestions = (content: string, cursorPosition: number) => {
 
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE_URL}/suggestions`, {
+      const response = await authenticatedFetch(`${API_BASE_URL}/suggestions`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-clerk-user-id': user.id
-        },
         body: JSON.stringify({
           context: context,
           limit: 3

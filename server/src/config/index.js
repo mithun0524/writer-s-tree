@@ -10,7 +10,7 @@ const parseDatabaseUrl = (url) => {
     database: parsedUrl.pathname.slice(1),
     user: parsedUrl.username,
     password: parsedUrl.password,
-    ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false
+    ssl: { rejectUnauthorized: false } // Railway requires SSL
   };
 };
 
@@ -32,11 +32,6 @@ export default {
         connectionTimeoutMillis: 2000,
         ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false
       },
-
-  jwt: {
-    secret: process.env.JWT_SECRET || 'change-this-secret',
-    expiresIn: process.env.JWT_EXPIRES_IN || '7d'
-  },
 
   redis: {
     host: process.env.REDIS_HOST || 'localhost',

@@ -4,9 +4,13 @@
   "description": "Writer's Tree Backend API",
   "main": "src/index.js",
   "type": "module",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "start": "node src/index.js",
     "dev": "node src/index.js",
+    "build": "echo 'No build step required for JavaScript'",
     "migrate": "npm run db:migrate",
     "db:migrate": "node src/scripts/migrate.js",
     "db:seed": "node src/scripts/seed.js"
@@ -19,6 +23,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@clerk/clerk-sdk-node": "^4.13.23",
     "bcrypt": "^5.1.1",
     "compression": "^1.7.4",
     "cookie-parser": "^1.4.6",
@@ -38,6 +43,7 @@
     "redis": "^5.10.0",
     "socket.io": "^4.6.1",
     "socket.io-client": "^4.8.3",
+    "svix": "^1.84.1",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
     "winston": "^3.11.0"

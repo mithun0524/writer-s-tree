@@ -28,7 +28,7 @@ export const exportProject = async (req, res, next) => {
        FROM projects p
        JOIN project_content pc ON p.id = pc.project_id AND pc.is_current = TRUE
        WHERE p.id = $1 AND p.user_id = $2`,
-      [projectId, req.userId]
+      [projectId, req.auth.userId]
     );
 
     if (projectResult.rows.length === 0) {
@@ -134,7 +134,7 @@ export const exportProject = async (req, res, next) => {
       // Finalize PDF
       doc.end();
       
-      logger.info('PDF export generated', { projectId, userId: req.userId });
+      logger.info('PDF export generated', { projectId, userId: req.auth.userId });
       return;
     }
 
@@ -160,7 +160,7 @@ export const exportTree = async (req, res, next) => {
     // Verify project ownership
     const projectResult = await query(
       'SELECT id, title FROM projects WHERE id = $1 AND user_id = $2',
-      [projectId, req.userId]
+      [projectId, req.auth.userId]
     );
 
     if (projectResult.rows.length === 0) {
@@ -177,7 +177,7 @@ export const exportTree = async (req, res, next) => {
     // In production, this should be generated client-side and uploaded
     const mockUrl = `https://exports.writerstree.com/${projectId}/tree/${Date.now()}.${format}`;
 
-    logger.info('Tree export request', { projectId, format, userId: req.userId });
+    logger.info('Tree export request', { projectId, format, userId: req.auth.userId });
 
     res.json({
       success: true,
