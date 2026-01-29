@@ -32,11 +32,36 @@ const server = createServer(app);
 // Security middleware
 app.use(helmet());
 app.use(cors({
-  origin: config.frontendUrl,
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+
+    // In production, only allow the specified frontend URL
+    if (config.env === 'production') {
+      const allowedOrigins = [
+        config.frontendUrl,
+        'https://writer-s-tree.vercel.app',
+        /\.vercel\.app$/.test(origin) ? origin : false // Allow any Vercel domain
+      ].filter(Boolean);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      } else {
+        return callback(new Error('Not allowed by CORS'));
+      }
+    } else {
+      // In development, allow localhost
+      return callback(null, true);
+    }
+  },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  optionsSuccessStatus: 200 // Some legacy browsers choke on 204
 }));
+
+// Handle preflight requests explicitly
+app.options('*', cors());
 
 // Compression
 app.use(compression());

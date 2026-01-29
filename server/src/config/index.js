@@ -16,7 +16,7 @@ const parseDatabaseUrl = (url) => {
 
 export default {
   env: process.env.NODE_ENV || 'development',
-  port: process.env.PORT || 3000,
+  port: process.env.PORT || 8080, // Railway uses 8080 by default
   apiVersion: process.env.API_VERSION || 'v1',
 
   database: process.env.DATABASE_URL
@@ -56,7 +56,7 @@ export default {
     }
   },
 
-  frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
+  frontendUrl: process.env.FRONTEND_URL || (process.env.NODE_ENV === 'production' ? 'https://writer-s-tree.vercel.app' : 'http://localhost:5173'),
 
   google: {
     clientId: process.env.GOOGLE_CLIENT_ID,
