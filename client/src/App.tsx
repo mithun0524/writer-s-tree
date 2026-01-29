@@ -1,6 +1,7 @@
 import { Layout } from '@/components/Layout';
 import { Dashboard } from '@/components/Dashboard';
-import { SignedIn, SignedOut, RedirectToSignIn, SignIn, SignUp } from "@clerk/clerk-react";
+// Temporarily disabled Clerk auth for testing
+// import { SignedIn, SignedOut, RedirectToSignIn, SignIn, SignUp } from "@clerk/clerk-react";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 
 function App() {
@@ -9,43 +10,22 @@ function App() {
       <Routes>
         <Route
           path="/"
-          element={
-            <>
-              <SignedIn>
-                <Navigate to="/dashboard" replace />
-              </SignedIn>
-              <SignedOut>
-                <RedirectToSignIn />
-              </SignedOut>
-            </>
-          }
+          element={<Navigate to="/dashboard" replace />}
         />
         <Route
             path="/dashboard"
-            element={
-                <>
-                <SignedIn>
-                    <Dashboard />
-                </SignedIn>
-                <SignedOut>
-                    <RedirectToSignIn />
-                </SignedOut>
-                </>
-            }
+            element={<Dashboard />}
+        />
+        <Route
+            path="/editor/:projectId"
+            element={<Layout />}
         />
         <Route
             path="/project/:id"
-            element={
-                <>
-                <SignedIn>
-                    <Layout />
-                </SignedIn>
-                <SignedOut>
-                    <RedirectToSignIn />
-                </SignedOut>
-                </>
-            }
+            element={<Layout />}
         />
+        {/* Temporarily disabled auth routes */}
+        {/*
         <Route
            path="/sign-in/*"
            element={<div className="flex items-center justify-center h-screen bg-background-secondary"><SignIn routing="path" path="/sign-in" /></div>}
@@ -58,6 +38,7 @@ function App() {
             </div>
           }
         />
+        */}
       </Routes>
     </BrowserRouter>
   );

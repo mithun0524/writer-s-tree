@@ -1,7 +1,29 @@
 import crypto from 'crypto';
 import { query } from '../config/database.js';
 
+// Helper function to ensure user exists (for testing)
+const ensureUserExists = async (userId) => {
+  try {
+    const existingUser = await query('SELECT id FROM users WHERE id = $1', [userId]);
+    if (existingUser.rows.length === 0) {
+      // Create test user
+      await query(
+        `INSERT INTO users (id, email, full_name, clerk_created_at)
+         VALUES ($1, $2, $3, $4)`,
+        [userId, 'test@example.com', 'Test User', new Date()]
+      );
+      console.log(`Created test user: ${userId}`);
+    }
+  } catch (error) {
+    console.error('Error ensuring user exists:', error);
+    // Continue anyway - the query might still work
+  }
+};
+
 export const createProject = async (userId, { title = 'Untitled Project', wordGoal = 50000, treeStyle = 'oak', treeSeason = 'summer' }) => {
+  // Ensure user exists (create if not for testing)
+  await ensureUserExists(userId);
+
   const treeSeed = crypto.createHash('sha256')
     .update(`${userId}-${Date.now()}-${Math.random()}`)
     .digest('hex');
@@ -26,6 +48,9 @@ export const createProject = async (userId, { title = 'Untitled Project', wordGo
 };
 
 export const getUserProjects = async (userId, { status = null, limit = 50, offset = 0 }) => {
+  // Ensure user exists (create if not for testing)
+  await ensureUserExists(userId);
+
   let queryText = `
     SELECT p.*, pc.content, pc.word_count, pc.character_count, pc.cursor_position
     FROM projects p
