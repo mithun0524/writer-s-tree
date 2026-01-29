@@ -34,8 +34,7 @@ app.use(helmet());
 app.use(cors({
     origin: "",
     credentials: false,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-    allowedHeaders: ['Content-Type', Authorization']
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
 }));
 
 // Compression
