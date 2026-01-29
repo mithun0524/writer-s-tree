@@ -56,7 +56,7 @@ export default {
     }
   },
 
-  frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
+  frontendUrl: process.env.FRONTEND_URL || 'http://writer-s-tree.vercel.app',
 
   google: {
     clientId: process.env.GOOGLE_CLIENT_ID,
