@@ -56,7 +56,7 @@ export default {
     }
   },
 
-  frontendUrl: process.env.FRONTEND_URL || 'http://writer-s-tree.vercel.app',
+  frontendUrl: process.env.FRONTEND_URL || 'https://writer-s-tree.vercel.app',
 
   google: {
     clientId: process.env.GOOGLE_CLIENT_ID,
