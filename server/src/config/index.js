@@ -56,11 +56,7 @@ export default {
     }
   },
 
-<<<<<<< HEAD
   frontendUrl: process.env.FRONTEND_URL || (process.env.NODE_ENV === 'production' ? 'https://writer-s-tree.vercel.app' : 'http://localhost:5173'),
-=======
-  frontendUrl: process.env.FRONTEND_URL || 'https://writer-s-tree.vercel.app',
->>>>>>> 9cf0a6ea7ecc3d122b314d92fd9be328be10680f
 
   google: {
     clientId: process.env.GOOGLE_CLIENT_ID,
