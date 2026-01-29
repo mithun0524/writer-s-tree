@@ -31,7 +31,12 @@ const server = createServer(app);
 
 // Security middleware
 app.use(helmet());
-app.use(cors());
+app.use(cors({
+    origin: "",
+    credentials: false,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    allowedHeaders: ['Content-Type', Authorization']
+}));
 
 // Compression
 app.use(compression());
