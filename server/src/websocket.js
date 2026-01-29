@@ -8,8 +8,8 @@ let io;
 export const initializeWebSocket = (server, config) => {
   io = new Server(server, {
     cors: {
-      origin: config.frontendUrl,
-      credentials: true,
+      origin: "",
+      credentials: false,
       methods: ['GET', 'POST']
     },
     transports: ['websocket', 'polling']
